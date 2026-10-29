@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c6d68">
+  <meta name="description" content="填写或粘贴寒假班排期，快速生成可分享的横版上课日历图片。">
+  <title>寒假班时间日历生成器</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ocr.css?v=20261029-1">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">日</span><div><strong>寒假班时间日历</strong><small>给家长看的课表，老师几分钟做好</small></div></div>
+    <div class="top-actions">
+      <label class="sample-picker">载入示例 <select id="templateSelect" aria-label="载入示例"><option value="">选择一份现有课表</option><option value="luo">罗文鹏 · L2 志高</option><option value="he">何克勤 · L5 志高</option><option value="peng">彭婕 · L5 志高</option><option value="bao">包晨 · L2 精进B</option></select></label>
+      <button id="downloadBtn" class="button button-primary" type="button">下载 PNG 图片 <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+  <main class="workspace">
+    <aside class="editor" aria-label="课表编辑区">
+      <div class="editor-intro"><span class="eyebrow">教师工作台</span><h1>制作一张清楚的课表</h1><p>填好班次信息，右侧日历会自动更新。所有编辑都在浏览器内完成。</p></div>
+      <section class="panel screenshot-panel"><div class="section-heading"><span class="section-index image-index">▧</span><div><h2>上传排课表截图</h2><p>自动识别班级行，核对后填入日历</p></div></div><label class="screenshot-upload">选择截图进行识别<input id="screenshotInput" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="help">截图只在当前浏览器中识别。请尽量截全表头和班级行，并保持文字清晰。</p><div id="ocrStatus" class="ocr-status" role="status" aria-live="polite"></div><div id="ocrResult" class="ocr-result" hidden><a id="ocrSourceLink" target="_blank" rel="noopener">查看原截图 ↗</a><img id="ocrSourceImage" alt="待核对的排课表截图"><div id="ocrUnresolved" class="ocr-unresolved" hidden></div><p class="ocr-review-title">先选择课型</p><label class="ocr-course-label">截图中的课型<select id="ocrCourseSelect"><option value="">请选择课型</option></select></label><label class="ocr-course-label">老师姓名（填写一次应用到该课型）<input id="ocrTeacherAll" type="text" placeholder="识别不准时在这里填写"></label><p class="help">选择课型后才显示该课型的班次。识别结果可能有错字，请先修改编码、日期、时间和教室。</p><div id="ocrRows"></div><label class="ocr-confirm"><input id="ocrConfirm" type="checkbox">我已对照原截图核对所选班次的编码、日期、时间、教室和老师姓名</label><button id="applyOcrBtn" type="button" class="button button-primary">将所选班次填入日历</button></div></section>
+      <details class="paste-box">
+        <summary><span class="summary-icon">⌁</span><span><strong>从 Excel 粘贴班级</strong><small>复制含表头的行，一次导入多个班次</small></span><span class="chevron">⌄</span></summary>
+        <div class="paste-body"><label for="pasteInput">把 Excel 中的表头和班级行一起复制到这里</label><textarea id="pasteInput" rows="6" placeholder="班级编码    班级名称（外）    校区名称    开课日期    期数    上课时间(外)    上课教室    实际教师"></textarea><button id="parseBtn" type="button" class="button button-outline">导入所选班级</button><p class="help">请先在 Excel 中筛选同一老师、同一课程的班次。导入后仍可逐项修改。</p></div>
+      </details>
+      <section class="panel"><div class="section-heading"><span class="section-index">01</span><div><h2>课表抬头</h2><p>这些内容会显示在图片顶部</p></div></div><div class="fields two-col"><label>年份<input id="yearInput" data-meta="year" type="number" min="2026" max="2100"></label><label>课程名称<input id="titleInput" data-meta="title" type="text" placeholder="例如 L2 志高"></label><label>老师姓名<input id="teacherInput" data-meta="teacher" type="text" placeholder="例如 罗文鹏"></label><label>校区概览<input id="campusInput" data-meta="campusSummary" type="text" placeholder="例如 福田景田教学区"></label></div></section>
+      <section class="panel"><div class="section-heading"><span class="section-index">02</span><div><h2>班次与上课时间</h2><p>最多四个班次；每个班次可用不同颜色</p></div></div><div id="classes" class="class-list"></div><button id="addClassBtn" type="button" class="button button-add">＋ 添加班次</button></section>
+      <section class="panel"><div class="section-heading"><span class="section-index">03</span><div><h2>扫码区</h2><p>沿用示例二维码，也可换成老师自己的图片</p></div></div><div class="qr-controls"><label class="check-row"><input id="showQrInput" type="checkbox" checked><span>在日历中显示扫码区</span></label><label class="upload-button">上传或更换二维码<input id="qrInput" type="file" accept="image/png,image/jpeg,image/webp"></label><span id="qrName" class="qr-name">当前使用示例二维码</span></div></section>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </aside>
+    <section class="preview-panel" aria-label="图片预览">
+      <div class="preview-heading"><div><span class="eyebrow">实时预览</span><h2>家长收到的图片</h2></div><div class="preview-meta"><span class="status-dot"></span><span id="classCount">3 个班次</span><span>3200 × 2130 px</span></div></div>
+      <div class="canvas-frame"><canvas id="calendarCanvas" width="3200" height="2130" aria-label="寒假班上课日历预览"></canvas></div>
+      <div class="preview-footer"><span>蓝 / 橙 / 紫等颜色区分不同班次，日期和时间会自动标注到日历。</span><button id="downloadBottomBtn" class="button button-primary" type="button">下载这张图片</button></div>
+    </section>
+  </main>
+  <script src="app.js" defer></script>
+  <script src="ocr.js?v=20261029-1" defer></script>
+</body>
+</html>
